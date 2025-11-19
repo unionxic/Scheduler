@@ -1,0 +1,22 @@
+# Results
+results/
+*.txt
+
+# Benchmarks binaries
+benchmarks/*/schbench
+benchmarks/*/hackbench
+benchmarks/*/*.o
+benchmarks/*/*.d
+benchmarks/*/bld/
+benchmarks/*/__pycache__/
+
+# Backup
+*_backup_*
+
+# Temporary
+*.tmp
+*.log
+
+# Benchmarks source
+benchmarks/
+

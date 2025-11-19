@@ -1,0 +1,25 @@
+# 벤치마크 결과 파일
+results/
+benchmarks/
+
+# 임시 파일
+*.txt.bak
+*.tmp
+*.log
+
+# OS 파일
+.DS_Store
+Thumbs.db
+
+# 에디터 파일
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# 빌드 아티팩트
+*.o
+*.a
+*.so
+

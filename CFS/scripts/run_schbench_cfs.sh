@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_ROOT="${HOME}/scheduler_experiments_cfs"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 SCHBENCH_BIN="${PROJECT_ROOT}/benchmarks/schbench/schbench"
 
 if [ ! -x "${SCHBENCH_BIN}" ]; then

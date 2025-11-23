@@ -79,6 +79,26 @@ EOF
     fi
 done
 
+echo "================================================================" >> "${RESULT_DIR}/comparison_results.txt"
+echo "성능 비교 요약" >> "${RESULT_DIR}/comparison_results.txt"
+echo "================================================================" >> "${RESULT_DIR}/comparison_results.txt"
+echo "" >> "${RESULT_DIR}/comparison_results.txt"
+
+echo "【schbench - RPS (높을수록 좋음)】" >> "${RESULT_DIR}/comparison_results.txt"
+for config in "${CONFIG_FILES[@]}"; do
+    CONFIG_NAME=$(basename "${config}" .conf)
+    RPS=$(grep "RPS:" "${RESULT_DIR}/schbench_${CONFIG_NAME}.txt" 2>/dev/null | head -1 | awk '{print $2}' || echo "N/A")
+    echo "${CONFIG_NAME}: ${RPS} RPS" >> "${RESULT_DIR}/comparison_results.txt"
+done
+
+echo "" >> "${RESULT_DIR}/comparison_results.txt"
+echo "【hackbench - 실행 시간 (낮을수록 좋음)】" >> "${RESULT_DIR}/comparison_results.txt"
+for config in "${CONFIG_FILES[@]}"; do
+    CONFIG_NAME=$(basename "${config}" .conf)
+    TIME=$(grep "실행 시간:" "${RESULT_DIR}/hackbench_${CONFIG_NAME}.txt" 2>/dev/null | head -1 | awk '{print $3}' | sed 's/초//' || echo "N/A")
+    echo "${CONFIG_NAME}: ${TIME}초" >> "${RESULT_DIR}/comparison_results.txt"
+done
+
 echo "" >> "${RESULT_DIR}/comparison_results.txt"
 echo "상세 결과: schbench_*.txt, hackbench_*.txt" >> "${RESULT_DIR}/comparison_results.txt"
 

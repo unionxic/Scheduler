@@ -4,12 +4,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/config_cfs.sh"
 
-PROJECT_ROOT="${HOME}/scheduler_experiments_cfs"
-HACKBENCH_BIN="${PROJECT_ROOT}/benchmarks/rt-tests/hackbench"
+[ ! -x "${HACKBENCH_BIN}" ] && { echo "[오류] hackbench를 찾을 수 없습니다: ${HACKBENCH_BIN}"; exit 1; }
 
-[ ! -x "${HACKBENCH_BIN}" ] && { echo "[오류] hackbench를 찾을 수 없습니다"; exit 1; }
-
-RESULT_DIR="${PROJECT_ROOT}/results/hackbench"
+RESULT_DIR="${RESULT_ROOT}/hackbench"
 mkdir -p "${RESULT_DIR}"
 
 echo "[실행] hackbench 다중 그룹 테스트 (커널: $(uname -r))"

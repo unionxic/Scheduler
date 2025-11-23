@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PROJECT_ROOT="${HOME}/scheduler_experiments_cfs"
-SCHBENCH_BIN="${PROJECT_ROOT}/benchmarks/schbench/schbench"
-HACKBENCH_BIN="${PROJECT_ROOT}/benchmarks/rt-tests/hackbench"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/config_cfs.sh"
 
 [ ! -x "${SCHBENCH_BIN}" ] && { echo "[오류] schbench를 찾을 수 없습니다"; exit 1; }
 [ ! -x "${HACKBENCH_BIN}" ] && { echo "[오류] hackbench를 찾을 수 없습니다"; exit 1; }
 
-RESULT_DIR="${PROJECT_ROOT}/results/workload_scenarios"
+RESULT_DIR="${RESULT_ROOT}/workload_scenarios"
 mkdir -p "${RESULT_DIR}"
 
 echo "========================================="

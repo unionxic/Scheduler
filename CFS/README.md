@@ -38,18 +38,33 @@ CFS (Completely Fair Scheduler) 스케줄러의 레이턴시 및 오버헤드를
 - 혼합 워크로드 (8 스레드, 8 태스크)
 - 고부하 컨텍스트 스위칭 (16 그룹, 640 태스크)
 
-### 3. 커널 파라미터 조정
+### 3. 네트워크 벤치마크 (NCP 연동)
+외부 클라우드 서버(NCP)와 연동한 네트워크 성능 측정:
+- **TCP 연결 시간**: p50/p90/p99 분포
+- **양방향 동시 전송**: 송신/수신 처리량
+- **소형 패킷 (64B)**: 작은 패킷 처리 성능
+- **CPU 부하 + 네트워크**: stress-ng 병행 시 처리량
+
+```bash
+# 단일 네트워크 테스트
+./scripts/run_network_advanced.sh
+
+# 설정별 네트워크 비교
+./scripts/run_network_advanced_configs.sh
+```
+
+### 4. 커널 파라미터 조정
 환경변수처럼 사용 가능한 설정 파일로 커널 파라미터 조정:
-- `default.conf` - 시스템 기본값
+- `baseline.conf` - 시스템 기본값
 - `low_latency.conf` - 낮은 레이턴시 최적화
 - `high_throughput.conf` - 높은 처리량 최적화
 - `minimal_migration.conf` - 마이그레이션 최소화
-- `aggressive_preempt.conf` - 공격적 선점 (실험용)
+- `balanced.conf` - 균형 설정
 
 ## 프로젝트 구조
 
 ```
-scheduler_experiments_cfs/
+CFS/
 ├── scripts/
 │   ├── run_all_cfs.sh              # 메인 실행 스크립트
 │   ├── run_schbench_cfs.sh         # schbench 벤치마크
@@ -57,15 +72,19 @@ scheduler_experiments_cfs/
 │   ├── run_workload_scenarios.sh   # 워크로드 시나리오
 │   ├── run_with_config.sh          # 설정 기반 실행
 │   ├── run_all_configs.sh          # 전체 설정 자동 비교
+│   ├── run_network_advanced.sh     # 고급 네트워크 벤치마크
+│   ├── run_network_advanced_configs.sh  # 설정별 네트워크 비교
 │   └── config_cfs.sh               # 공통 설정
 ├── configs/
-│   ├── *.conf                      # 커널 파라미터 설정 파일
-│   └── README.md                   # 설정 파일 가이드
+│   └── *.conf                      # 커널 파라미터 설정 파일
 ├── results/
 │   ├── schbench/                   # schbench 결과
 │   ├── hackbench/                  # hackbench 결과
 │   ├── workload_scenarios/         # 워크로드 결과
-│   └── config_comparison/          # 설정 비교 결과
+│   ├── config_comparison/          # 설정 비교 결과
+│   └── network/                    # 네트워크 벤치마크 결과
+├── docs/
+│   └── network_benchmark_handover.md  # 네트워크 벤치마크 인수인계서
 └── benchmarks/
     ├── schbench/                   # schbench 소스/빌드
     └── rt-tests/                   # hackbench 소스/빌드
@@ -80,6 +99,9 @@ sudo apt install build-essential git
 
 # perf 도구 (선택사항, 더 많은 메트릭 수집)
 sudo apt install linux-tools-$(uname -r)
+
+# 네트워크 벤치마크용
+sudo apt install iperf3 stress-ng netcat bc
 ```
 
 ### perf 권한 설정
@@ -127,6 +149,33 @@ cat results/hackbench/hackbench_results.txt
 
 # 워크로드 결과 확인
 cat results/workload_scenarios/workload_results.txt
+```
+
+### 네트워크 벤치마크 (NCP 연동)
+
+#### 환경 변수 설정
+```bash
+# 기본값 (NCP 서버)
+TARGET_IP="223.130.152.25"
+TARGET_PORT="5281"
+```
+
+#### 단일 테스트
+```bash
+# 빠른 테스트
+PING_COUNT=5 TEST_DURATION=5 ./scripts/run_network_advanced.sh
+
+# 전체 테스트
+./scripts/run_network_advanced.sh
+```
+
+#### 설정별 네트워크 비교
+```bash
+# 모든 커널 설정으로 네트워크 테스트
+./scripts/run_network_advanced_configs.sh
+
+# 결과 확인
+cat results/network/network_advanced_comparison.txt
 ```
 
 ### 커널 파라미터 조정
@@ -201,6 +250,19 @@ EOF
 - **CPU migrations**: 낮을수록 캐시 효율이 좋음
 - **Page faults**: 메모리 접근 패턴 지표
 
+### 네트워크 벤치마크 결과
+```
+설정|RTT p50|RTT p99|양방향|소형패킷|CPU부하
+---|---|---|---|---|---
+balanced|1027.64|1039.38|25.1|19.0|25.1
+baseline|1034.56|1049.42|23.3|19.0|17.0
+```
+
+- **RTT p50/p99**: TCP 연결 시간 분포 (ms), 낮을수록 빠름
+- **양방향**: 동시 송수신 처리량 (Mbps)
+- **소형패킷**: 64byte 패킷 처리량 (Mbps)
+- **CPU부하**: stress-ng 4코어 부하 중 네트워크 처리량 (Mbps)
+
 ## 실험 시나리오
 
 ### 시나리오 1: 레이턴시 vs 처리량 트레이드오프
@@ -254,6 +316,7 @@ sudo visudo -f /etc/sudoers.d/scheduler-tuning
 ## 추가 문서
 
 - **configs/README.md**: 커널 파라미터 설명
+- **docs/network_benchmark_handover.md**: 네트워크 벤치마크 인수인계서 (EEVDF 이식용)
 
 ## 고급 기능
 

@@ -40,28 +40,30 @@ echo ""
 echo "설명: ${DESCRIPTION}"
 echo ""
 
-ORIGINAL_LATENCY=$(cat /proc/sys/kernel/sched_latency_ns)
-ORIGINAL_MIN_GRAN=$(cat /proc/sys/kernel/sched_min_granularity_ns)
-ORIGINAL_WAKEUP_GRAN=$(cat /proc/sys/kernel/sched_wakeup_granularity_ns)
-ORIGINAL_MIGRATION=$(cat /proc/sys/kernel/sched_migration_cost_ns)
+SUDO_PASS="1234"
+
+ORIGINAL_LATENCY=$(echo "${SUDO_PASS}" | sudo -S cat /sys/kernel/debug/sched/latency_ns 2>/dev/null)
+ORIGINAL_MIN_GRAN=$(echo "${SUDO_PASS}" | sudo -S cat /sys/kernel/debug/sched/min_granularity_ns 2>/dev/null)
+ORIGINAL_WAKEUP_GRAN=$(echo "${SUDO_PASS}" | sudo -S cat /sys/kernel/debug/sched/wakeup_granularity_ns 2>/dev/null)
+ORIGINAL_MIGRATION=$(echo "${SUDO_PASS}" | sudo -S cat /sys/kernel/debug/sched/migration_cost_ns 2>/dev/null)
 
 restore_params() {
     echo ""
     echo "[정보] 원본 파라미터 복원 중..."
-    sudo sysctl -w kernel.sched_latency_ns=${ORIGINAL_LATENCY} > /dev/null 2>&1 || true
-    sudo sysctl -w kernel.sched_min_granularity_ns=${ORIGINAL_MIN_GRAN} > /dev/null 2>&1 || true
-    sudo sysctl -w kernel.sched_wakeup_granularity_ns=${ORIGINAL_WAKEUP_GRAN} > /dev/null 2>&1 || true
-    sudo sysctl -w kernel.sched_migration_cost_ns=${ORIGINAL_MIGRATION} > /dev/null 2>&1 || true
+    echo "${SUDO_PASS}" | sudo -S bash -c "echo ${ORIGINAL_LATENCY} > /sys/kernel/debug/sched/latency_ns" 2>/dev/null || true
+    echo "${SUDO_PASS}" | sudo -S bash -c "echo ${ORIGINAL_MIN_GRAN} > /sys/kernel/debug/sched/min_granularity_ns" 2>/dev/null || true
+    echo "${SUDO_PASS}" | sudo -S bash -c "echo ${ORIGINAL_WAKEUP_GRAN} > /sys/kernel/debug/sched/wakeup_granularity_ns" 2>/dev/null || true
+    echo "${SUDO_PASS}" | sudo -S bash -c "echo ${ORIGINAL_MIGRATION} > /sys/kernel/debug/sched/migration_cost_ns" 2>/dev/null || true
     echo "[정보] 원본 파라미터 복원 완료"
 }
 
 trap restore_params EXIT
 
 echo "[정보] 커널 파라미터 적용 중..."
-sudo sysctl -w kernel.sched_latency_ns=${SCHED_LATENCY_NS} > /dev/null
-sudo sysctl -w kernel.sched_min_granularity_ns=${SCHED_MIN_GRANULARITY_NS} > /dev/null
-sudo sysctl -w kernel.sched_wakeup_granularity_ns=${SCHED_WAKEUP_GRANULARITY_NS} > /dev/null
-sudo sysctl -w kernel.sched_migration_cost_ns=${SCHED_MIGRATION_COST_NS} > /dev/null
+echo "${SUDO_PASS}" | sudo -S bash -c "echo ${SCHED_LATENCY_NS} > /sys/kernel/debug/sched/latency_ns"
+echo "${SUDO_PASS}" | sudo -S bash -c "echo ${SCHED_MIN_GRANULARITY_NS} > /sys/kernel/debug/sched/min_granularity_ns"
+echo "${SUDO_PASS}" | sudo -S bash -c "echo ${SCHED_WAKEUP_GRANULARITY_NS} > /sys/kernel/debug/sched/wakeup_granularity_ns"
+echo "${SUDO_PASS}" | sudo -S bash -c "echo ${SCHED_MIGRATION_COST_NS} > /sys/kernel/debug/sched/migration_cost_ns"
 echo "[정보] 커널 파라미터 적용 완료"
 echo ""
 

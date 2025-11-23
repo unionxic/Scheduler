@@ -22,6 +22,9 @@ if [ ! -f "$CONFIG_FILE" ]; then
     exit 1
 fi
 
+# EEVDF debugfs 경로
+SCHED_DEBUG="/sys/kernel/debug/sched"
+
 echo "========================================"
 echo "EEVDF 스케줄러 - 설정 기반 벤치마크"
 echo "========================================"
@@ -32,34 +35,30 @@ echo "[1/7] 설정 파일 로드 중..."
 source "${CONFIG_FILE}"
 
 echo "적용할 설정: ${DESCRIPTION}"
-echo "  sched_latency_ns: ${SCHED_LATENCY_NS}"
-echo "  sched_min_granularity_ns: ${SCHED_MIN_GRANULARITY_NS}"
-echo "  sched_wakeup_granularity_ns: ${SCHED_WAKEUP_GRANULARITY_NS}"
-echo "  sched_migration_cost_ns: ${SCHED_MIGRATION_COST_NS}"
+echo "  base_slice_ns: ${BASE_SLICE_NS}"
+echo "  migration_cost_ns: ${MIGRATION_COST_NS}"
+echo "  nr_migrate: ${NR_MIGRATE}"
 echo ""
 
 # [2] 원본 백업
 echo "[2/7] 원본 파라미터 백업 중..."
-ORIGINAL_LATENCY=$(cat /proc/sys/kernel/sched_latency_ns)
-ORIGINAL_MIN_GRAN=$(cat /proc/sys/kernel/sched_min_granularity_ns)
-ORIGINAL_WAKEUP_GRAN=$(cat /proc/sys/kernel/sched_wakeup_granularity_ns)
-ORIGINAL_MIGRATION=$(cat /proc/sys/kernel/sched_migration_cost_ns)
+ORIGINAL_BASE_SLICE=$(cat ${SCHED_DEBUG}/base_slice_ns)
+ORIGINAL_MIGRATION=$(cat ${SCHED_DEBUG}/migration_cost_ns)
+ORIGINAL_NR_MIGRATE=$(cat ${SCHED_DEBUG}/nr_migrate)
 
 echo "원본 값:"
-echo "  sched_latency_ns: ${ORIGINAL_LATENCY}"
-echo "  sched_min_granularity_ns: ${ORIGINAL_MIN_GRAN}"
-echo "  sched_wakeup_granularity_ns: ${ORIGINAL_WAKEUP_GRAN}"
-echo "  sched_migration_cost_ns: ${ORIGINAL_MIGRATION}"
+echo "  base_slice_ns: ${ORIGINAL_BASE_SLICE}"
+echo "  migration_cost_ns: ${ORIGINAL_MIGRATION}"
+echo "  nr_migrate: ${ORIGINAL_NR_MIGRATE}"
 echo ""
 
 # [3] 복원 함수
 restore_params() {
     echo ""
     echo "[7/7] 원본 파라미터 복원 중..."
-    sysctl -w kernel.sched_latency_ns=${ORIGINAL_LATENCY} > /dev/null
-    sysctl -w kernel.sched_min_granularity_ns=${ORIGINAL_MIN_GRAN} > /dev/null
-    sysctl -w kernel.sched_wakeup_granularity_ns=${ORIGINAL_WAKEUP_GRAN} > /dev/null
-    sysctl -w kernel.sched_migration_cost_ns=${ORIGINAL_MIGRATION} > /dev/null
+    echo ${ORIGINAL_BASE_SLICE} > ${SCHED_DEBUG}/base_slice_ns
+    echo ${ORIGINAL_MIGRATION} > ${SCHED_DEBUG}/migration_cost_ns
+    echo ${ORIGINAL_NR_MIGRATE} > ${SCHED_DEBUG}/nr_migrate
     echo "복원 완료!"
 }
 
@@ -68,19 +67,17 @@ trap restore_params EXIT
 
 # [5] 커널 파라미터 적용
 echo "[3/7] 커널 파라미터 적용 중..."
-sysctl -w kernel.sched_latency_ns=${SCHED_LATENCY_NS} > /dev/null
-sysctl -w kernel.sched_min_granularity_ns=${SCHED_MIN_GRANULARITY_NS} > /dev/null
-sysctl -w kernel.sched_wakeup_granularity_ns=${SCHED_WAKEUP_GRANULARITY_NS} > /dev/null
-sysctl -w kernel.sched_migration_cost_ns=${SCHED_MIGRATION_COST_NS} > /dev/null
+echo ${BASE_SLICE_NS} > ${SCHED_DEBUG}/base_slice_ns
+echo ${MIGRATION_COST_NS} > ${SCHED_DEBUG}/migration_cost_ns
+echo ${NR_MIGRATE} > ${SCHED_DEBUG}/nr_migrate
 echo "적용 완료!"
 echo ""
 
 # 적용된 값 확인
 echo "[4/7] 적용된 파라미터 확인..."
-echo "  sched_latency_ns: $(cat /proc/sys/kernel/sched_latency_ns)"
-echo "  sched_min_granularity_ns: $(cat /proc/sys/kernel/sched_min_granularity_ns)"
-echo "  sched_wakeup_granularity_ns: $(cat /proc/sys/kernel/sched_wakeup_granularity_ns)"
-echo "  sched_migration_cost_ns: $(cat /proc/sys/kernel/sched_migration_cost_ns)"
+echo "  base_slice_ns: $(cat ${SCHED_DEBUG}/base_slice_ns)"
+echo "  migration_cost_ns: $(cat ${SCHED_DEBUG}/migration_cost_ns)"
+echo "  nr_migrate: $(cat ${SCHED_DEBUG}/nr_migrate)"
 echo ""
 
 sleep 2  # 시스템 안정화
@@ -127,10 +124,9 @@ cat > "${RESULT_DIR}/config_info.txt" <<EOF
 측정 시각: $(date '+%Y-%m-%d %H:%M:%S')
 
 적용된 파라미터:
-  sched_latency_ns: ${SCHED_LATENCY_NS}
-  sched_min_granularity_ns: ${SCHED_MIN_GRANULARITY_NS}
-  sched_wakeup_granularity_ns: ${SCHED_WAKEUP_GRANULARITY_NS}
-  sched_migration_cost_ns: ${SCHED_MIGRATION_COST_NS}
+  base_slice_ns: ${BASE_SLICE_NS}
+  migration_cost_ns: ${MIGRATION_COST_NS}
+  nr_migrate: ${NR_MIGRATE}
 
 결과:
 $([ -f "${RESULT_DIR}/schbench.txt" ] && echo "  schbench: RPS ${RPS}" || echo "  schbench: N/A")
@@ -141,4 +137,3 @@ echo "결과 저장 완료: ${RESULT_DIR}/"
 echo ""
 
 # [7] 스크립트 종료 시 trap이 자동으로 restore_params() 실행
-

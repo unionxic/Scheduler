@@ -4,7 +4,8 @@
 set -euo pipefail
 
 # 프로젝트 경로
-PROJECT_ROOT="${HOME}/scheduler_experiments_eevdf"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "${SCRIPT_DIR}")"
 RESULT_ROOT="${PROJECT_ROOT}/results"
 
 # 벤치마크 바이너리 경로

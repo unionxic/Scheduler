@@ -37,12 +37,25 @@ Scheduler/
 - 혼합 워크로드
 - 고부하 컨텍스트 스위칭
 
+### 4. 네트워크 벤치마크 (CFS)
+- **TCP 연결 시간**: p50/p90/p99 분포 측정
+- **양방향 동시 전송**: 송신/수신 처리량
+- **소형 패킷 (64B)**: 작은 패킷 처리 성능
+- **CPU 부하 + 네트워크**: stress-ng 병행 시 처리량
+
 ## 빠른 시작
 
 ### CFS 벤치마크
 ```bash
 cd CFS
+# 기본 벤치마크
 ./scripts/run_all_cfs.sh --basic
+
+# 네트워크 벤치마크
+./scripts/run_network_advanced.sh
+
+# 최종 리포트 생성
+./scripts/generate_final_report.sh
 ```
 
 ### EEVDF 벤치마크
@@ -82,6 +95,10 @@ cd EEVDF
    - CFS: `CFS/results/config_comparison/comparison_results.txt`
    - EEVDF: `EEVDF/results/config_comparison/comparison_results.txt`
 
+5. **네트워크 성능 비교** (CFS)
+   - 네트워크 벤치마크: `CFS/results/network/network_advanced_comparison.txt`
+   - 설정별 네트워크 성능: `CFS/results/network/network_advanced_configs_*.txt`
+
 ## 주요 비교 지표
 
 ### 레이턴시 특성
@@ -100,6 +117,12 @@ cd EEVDF
 - 평균 RPS
 - Tail latency (p99, p99.9)
 
+### 네트워크 성능 (CFS)
+- TCP 연결 시간 (RTT p50, p90, p99)
+- 양방향 전송 처리량 (Mbps)
+- 소형 패킷 처리량 (64B, Mbps)
+- CPU 부하 시 네트워크 처리량 (Mbps)
+
 ## 실험 환경
 
 - **CFS VM**: Linux Kernel 5.15 이상
@@ -113,6 +136,7 @@ cd EEVDF
 - **EEVDF/README.md**: EEVDF 벤치마크 상세 가이드
 - **CFS/configs/README.md**: 커널 파라미터 설명
 - **EEVDF/configs/README.md**: 커널 파라미터 설명
+- **CFS/docs/network_benchmark_handover.md**: 네트워크 벤치마크 인수인계서
 
 ## 라이센스
 

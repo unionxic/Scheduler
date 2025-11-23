@@ -16,6 +16,9 @@ sudo ./scripts/run_with_config_eevdf.sh configs/low_latency.conf
 
 # 모든 설정 자동 비교 (sudo 필요)
 sudo ./scripts/run_all_configs_eevdf.sh
+
+# 네트워크 성능 테스트
+TARGET_IP=223.130.152.25 TARGET_PORT=5281 ./scripts/run_network_advanced_eevdf.sh
 ```
 
 ## 벤치마크 종류
@@ -46,10 +49,17 @@ sudo ./scripts/run_all_configs_eevdf.sh
 - `balanced.conf` - 균형잡힌 설정
 - `minimal_migration.conf` - 마이그레이션 최소화
 
+### 4. 네트워크 성능 테스트
+네트워크 환경에서의 스케줄러 성능 측정:
+- TCP 연결 시간 (p50, p90, p99)
+- 양방향 동시 전송 (iperf3)
+- 소형 패킷 (64B) 처리량
+- CPU 부하 하의 네트워크 성능
+
 ## 프로젝트 구조
 
 ```
-scheduler_experiments_eevdf/
+Scheduler/EEVDF/
 ├── scripts/
 │   ├── run_all_eevdf.sh              # 메인 실행 스크립트
 │   ├── run_schbench_eevdf.sh         # schbench 벤치마크
@@ -58,6 +68,8 @@ scheduler_experiments_eevdf/
 │   ├── run_kernel_tuning_eevdf.sh    # 커널 튜닝 (레거시)
 │   ├── run_with_config_eevdf.sh      # 설정 기반 실행
 │   ├── run_all_configs_eevdf.sh      # 전체 설정 자동 비교
+│   ├── run_network_advanced_eevdf.sh # 네트워크 고급 테스트
+│   ├── run_network_advanced_configs_eevdf.sh # 네트워크 설정별 비교
 │   └── common.sh                     # 공통 설정 및 함수
 ├── configs/
 │   └── *.conf                        # 커널 파라미터 설정 파일
@@ -67,7 +79,8 @@ scheduler_experiments_eevdf/
 │   ├── hackbench/                    # hackbench 결과
 │   ├── workload_scenarios/           # 워크로드 결과
 │   ├── kernel_tuning/                # 커널 튜닝 결과 (레거시)
-│   └── config_based/                 # 설정 기반 결과
+│   ├── config_based/                 # 설정 기반 결과
+│   └── network/                      # 네트워크 테스트 결과
 └── benchmarks/
     ├── schbench/                     # schbench 소스/빌드
     └── rt-tests/                     # hackbench 소스/빌드
@@ -157,14 +170,34 @@ sudo ./scripts/run_all_configs_eevdf.sh
 cat results/config_based/comparison_report.txt
 ```
 
+### 네트워크 성능 테스트
+
+#### 기본 네트워크 테스트
+```bash
+# 네트워크 고급 테스트 실행
+TARGET_IP=223.130.152.25 TARGET_PORT=5281 ./scripts/run_network_advanced_eevdf.sh
+
+# 결과 확인
+cat results/network/network_advanced_results.txt
+```
+
+#### 설정별 네트워크 성능 비교
+```bash
+# 모든 설정으로 네트워크 테스트 (sudo 필요)
+TARGET_IP=223.130.152.25 TARGET_PORT=5281 \
+sudo ./scripts/run_network_advanced_configs_eevdf.sh
+
+# 비교 결과
+cat results/network/network_advanced_comparison.txt
+```
+
 #### 커스텀 설정 만들기
 ```bash
 # 새 설정 파일 생성
 cat > configs/my_config.conf <<EOF
-SCHED_LATENCY_NS=6000000
-SCHED_MIN_GRANULARITY_NS=1000000
-SCHED_WAKEUP_GRANULARITY_NS=1500000
-SCHED_MIGRATION_COST_NS=750000
+BASE_SLICE_NS=1500000        # 1.5ms
+MIGRATION_COST_NS=750000     # 0.75ms
+NR_MIGRATE=32
 DESCRIPTION="내 커스텀 설정"
 CONFIG_NAME="my_config"
 EOF
